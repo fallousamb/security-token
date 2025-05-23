@@ -1,0 +1,15 @@
+meta {
+  name: helloAdmin
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/api/v1/admin
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjpbeyJhdXRob3JpdHkiOiJBRE1JTiJ9XSwic3ViIjoiYWRtaW5AZ21haWwuY29tIiwiaWF0IjoxNzQ4MDMxNTg5LCJleHAiOjE3NDgxMTc5ODl9.gpW6t53vGBFzHJh4OwYiG2sbFk4B6SQOPhl59rE3iQw
+}
