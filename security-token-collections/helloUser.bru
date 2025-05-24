@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: 
+  url: {{host}}/api/v1/users/hello
   body: none
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjpbeyJhdXRob3JpdHkiOiJVU0VSIn1dLCJzdWIiOiJmYWxsb3VzYW1iNzRAZ21haWwuY29tIiwiaWF0IjoxNzQ4MDMxOTIwLCJleHAiOjE3NDgxMTgzMjB9.l0SZ6H-JEw2oxwEAwd0spqfyKqetaNncR3BizK-LtdQ
 }

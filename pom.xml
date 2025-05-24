@@ -29,6 +29,12 @@
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.11.5</jjwt.version>
+        <jacoco.maven.plugin>0.8.12</jacoco.maven.plugin>
+        <sonar.maven.plugin>3.9.1.2184</sonar.maven.plugin>
+        <sonar.java.source>21</sonar.java.source>
+        <sonar.dependencyCheck.htmlReportPath>target/dependency-check-report.html</sonar.dependencyCheck.htmlReportPath>
+        <sonar.skip.execution>true</sonar.skip.execution>
+        <maven.surefire.plugin>3.5.3</maven.surefire.plugin>
     </properties>
     <dependencies>
         <dependency>
@@ -109,6 +115,55 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <!-- Couverture de code par les tests-->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.maven.plugin}</version>
+
+                <configuration>
+                    <append>true</append>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Contrôle qualité du code -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar.maven.plugin}</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sonar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sonar.skip>${sonar.skip.execution}</sonar.skip>
+                </configuration>
+            </plugin>
+
+            <!-- Exécution des tests unitaires -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin}</version>
             </plugin>
         </plugins>
     </build>
