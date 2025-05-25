@@ -6,16 +6,21 @@ import com.mouridedev.security_token.dto.SignInRequest;
 import com.mouridedev.security_token.dto.SignUpRequest;
 import com.mouridedev.security_token.entities.User;
 import com.mouridedev.security_token.enums.Role;
+import com.mouridedev.security_token.exceptions.FonctionnelErrorCodes;
+import com.mouridedev.security_token.exceptions.FonctionnelleException;
 import com.mouridedev.security_token.repository.UserRepository;
 import com.mouridedev.security_token.services.IAuthenticationService;
 import com.mouridedev.security_token.services.IJwtService;
 import lombok.RequiredArgsConstructor;
+import org.apache.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 
 @Service
@@ -33,6 +38,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
     @Override
     public User signUp(final SignUpRequest signUpRequest) {
+        validateEmailUser(signUpRequest.getEmail());
         final User user = User.builder()
                 .firstname(signUpRequest.getFirstName())
                 .secondname(signUpRequest.getLastName())
@@ -45,13 +51,22 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
     @Override
     public JwtAuthenticationResponse signIn(final SignInRequest signinRequest) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                signinRequest.getEmail(),
-                signinRequest.getPassword()
-        ));
-
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            signinRequest.getEmail(),
+                            signinRequest.getPassword()
+                    )
+            );
+        } catch (final BadCredentialsException e) {
+            final FonctionnelErrorCodes error = FonctionnelErrorCodes.EMAIL_PASSWORD_NOT_VALID;
+            throw new FonctionnelleException(HttpStatus.SC_NOT_FOUND, error.getCode(), String.format(error.getMessage()));
+        }
         final User user = userRepository.findByEmail(signinRequest.getEmail()).orElseThrow(
-                () -> new IllegalArgumentException("Invalid email or password")
+                () -> {
+                    final FonctionnelErrorCodes error = FonctionnelErrorCodes.USER_NOT_FOUND;
+                    return new FonctionnelleException(HttpStatus.SC_NOT_FOUND, error.getCode(), String.format(error.getMessage(), signinRequest.getEmail()));
+                }
         );
 
         final String token = jwtService.generateToken(user);
@@ -82,10 +97,24 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
      * @param refreshToken Refresh token
      * @return JwtAuthenticationResponse
      */
-    private static JwtAuthenticationResponse buildJwtToken(String token, String refreshToken) {
+    private static JwtAuthenticationResponse buildJwtToken(final String token, final String refreshToken) {
         final JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
         jwtAuthenticationResponse.setToken(token);
         jwtAuthenticationResponse.setRefreshToken(refreshToken);
         return jwtAuthenticationResponse;
+    }
+
+
+    /**
+     * Validates if the provided email is already used by another user.
+     *
+     * @param email the email to check
+     */
+    private void validateEmailUser(final String email) {
+        final Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            final FonctionnelErrorCodes error = FonctionnelErrorCodes.EMAIL_CONFLICT;
+            throw new FonctionnelleException(HttpStatus.SC_CONFLICT, error.getCode(), String.format(error.getMessage(), email));
+        }
     }
 }

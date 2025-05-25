@@ -1,11 +1,12 @@
 package com.mouridedev.security_token.services.impl;
 
+import com.mouridedev.security_token.exceptions.FonctionnelErrorCodes;
+import com.mouridedev.security_token.exceptions.FonctionnelleException;
 import com.mouridedev.security_token.repository.UserRepository;
 import com.mouridedev.security_token.services.UserService;
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.apache.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,13 +18,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetailsService userDetailsService() {
-        return new UserDetailsService() {
-            @Override
-            public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
-                return userRepository
-                        .findByEmail(username)
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            }
-        };
+        return username -> userRepository
+                .findByEmail(username)
+                .orElseThrow(() -> {
+                    final FonctionnelErrorCodes error = FonctionnelErrorCodes.USER_NOT_FOUND;
+                    return new FonctionnelleException(HttpStatus.SC_NOT_FOUND, error.getCode(), String.format(error.getMessage(), username));
+                });
     }
 }
